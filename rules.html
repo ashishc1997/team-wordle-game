@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to Play Team Wordle</title>
+<style>
+/* Single-theme by design: this page is the game's companion and shares its
+   dark board look. No web fonts — it has to work offline from a flash drive. */
+:root {
+  --ink:      #0f1219;
+  --surface:  #1a1e2a;
+  --surface-2:#232838;
+  --line:     #2d3344;
+  --text:     #e9ecf3;
+  --muted:    #8d95ab;
+  --correct:  #4f9d52;
+  --present:  #c2a13a;
+  --absent:   #3a4052;
+  --team-a:   #4aa3df;
+  --team-b:   #e2724f;
+
+  --sans: "Segoe UI", Inter, system-ui, -apple-system, Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+/* ---------- masthead ---------- */
+
+.masthead { margin-bottom: 44px; }
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+h1 {
+  font-size: clamp(30px, 5.5vw, 46px);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  margin: 0 0 16px;
+}
+h1 em { font-style: normal; color: var(--correct); }
+
+.standfirst {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 62ch;
+  margin: 0;
+}
+.standfirst strong { color: var(--text); font-weight: 600; }
+
+/* ---------- sections ---------- */
+
+section {
+  border-top: 1px solid var(--line);
+  padding-top: 28px;
+  margin-top: 40px;
+}
+
+h2 {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  margin: 0 0 18px;
+}
+
+/* the section marker is a board tile — the page's one recurring motif */
+.marker {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0;
+  background: var(--absent);
+}
+.marker.c { background: var(--correct); }
+.marker.p { background: var(--present); }
+
+p { margin: 0 0 16px; max-width: 64ch; }
+p:last-child { margin-bottom: 0; }
+
+/* ---------- tiles ---------- */
+
+.tile {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 5px;
+  border: 2px solid var(--line);
+  font-size: 20px;
+  font-weight: 800;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+.tile.correct { background: var(--correct); border-color: var(--correct); }
+.tile.present { background: var(--present); border-color: var(--present); }
+.tile.absent  { background: var(--absent);  border-color: var(--absent);  }
+
+/* ---------- colour legend ---------- */
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.legend-row {
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 18px;
+  align-items: start;
+  background: var(--surface);
+  border-left: 3px solid var(--line);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+}
+.legend-row.is-correct { border-left-color: var(--correct); }
+.legend-row.is-present { border-left-color: var(--present); }
+.legend-row.is-absent  { border-left-color: var(--absent);  }
+
+.legend-row .label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.is-correct .label { color: var(--correct); }
+.is-present .label { color: var(--present); }
+.is-absent  .label { color: var(--muted);   }
+
+.legend-row p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+.legend-row p strong { color: var(--text); font-weight: 600; }
+
+/* ---------- worked example ---------- */
+
+.example {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 24px;
+  overflow-x: auto;
+}
+
+.example-head {
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+.example-head b { color: var(--text); letter-spacing: .2em; }
+
+.guess {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+.guess:last-of-type { margin-bottom: 0; }
+
+.row { display: flex; gap: 6px; flex: 0 0 auto; }
+
+.note {
+  font-size: 14px;
+  color: var(--muted);
+  max-width: 34ch;
+}
+.note b { color: var(--text); font-weight: 600; }
+
+/* ---------- duplicate-letter callout ---------- */
+
+.callout {
+  background: var(--surface-2);
+  border-radius: 10px;
+  padding: 22px 24px;
+  margin-top: 22px;
+  overflow-x: auto;
+}
+.callout h3 {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--present);
+  margin: 0 0 12px;
+}
+.callout p { font-size: 15px; color: var(--muted); }
+.callout p strong { color: var(--text); font-weight: 600; }
+.callout .row { margin: 16px 0; }
+
+/* ---------- team rules ---------- */
+
+.rules-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.rules-list li {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 20px;
+  align-items: baseline;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.rules-list li:last-child { border-bottom: 0; }
+.rules-list dt, .rules-list .k {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.rules-list .v { margin: 0; color: var(--text); font-size: 15px; }
+.rules-list .v span { color: var(--muted); }
+
+.points {
+  color: var(--correct);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- controls ---------- */
+
+.keys {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+kbd {
+  flex: 0 0 auto;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  background: #4b5266;
+  color: var(--text);
+  border-radius: 5px;
+  padding: 5px 10px;
+}
+.key-row span { font-size: 14px; color: var(--muted); }
+
+/* ---------- footer ---------- */
+
+footer {
+  margin-top: 48px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+  font-size: 14px;
+  color: var(--muted);
+}
+footer .vs { font-weight: 700; letter-spacing: .04em; }
+footer .a { color: var(--team-a); }
+footer .b { color: var(--team-b); }
+
+a { color: var(--correct); }
+a:focus-visible, .key-row:focus-visible { outline: 2px solid var(--correct); outline-offset: 2px; }
+
+@media (max-width: 560px) {
+  .page { padding: 36px 18px 56px; }
+  .tile { width: 38px; height: 38px; font-size: 17px; }
+  .legend-row { grid-template-columns: 38px 1fr; gap: 14px; }
+  .guess { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .rules-list li { grid-template-columns: 1fr; gap: 4px; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header class="masthead">
+    <div class="eyebrow">Monthly team activity</div>
+    <h1>How to play <em>Team Wordle</em></h1>
+    <p class="standfirst">
+      Two teams. One hidden five-letter word at a time. Each team has the clock to
+      solve as many as they can — <strong>five points a word</strong>, and the
+      highest score takes it.
+    </p>
+  </header>
+
+  <section>
+    <h2><span class="marker c">1</span> The objective</h2>
+    <p>
+      A five-letter word is hidden. Your team has <strong>five guesses</strong> to
+      find it. Every guess must be five letters, and every guess comes back
+      colour-coded to tell you how close you were — so each attempt narrows down
+      the answer.
+    </p>
+    <p>
+      Solve it within those five guesses and your team banks the points. Run out
+      of guesses and the word is revealed, worth nothing, and the next word loads
+      straight away. You cannot skip a word — if it's on the board, you play it out.
+    </p>
+  </section>
+
+  <section>
+    <h2><span class="marker p">2</span> What the colours mean</h2>
+    <p>
+      After you submit a guess, every letter turns one of three colours. The colour
+      is about <strong>that letter in that position</strong>.
+    </p>
+
+    <div class="legend">
+      <div class="legend-row is-correct">
+        <span class="tile correct">A</span>
+        <div>
+          <div class="label">Green — right letter, right place</div>
+          <p>This letter is in the word and <strong>exactly where you put it</strong>. Lock it in and build around it.</p>
+        </div>
+      </div>
+
+      <div class="legend-row is-present">
+        <span class="tile present">R</span>
+        <div>
+          <div class="label">Yellow — right letter, wrong place</div>
+          <p>The word <strong>does</strong> contain this letter, but somewhere else. Keep it, move it.</p>
+        </div>
+      </div>
+
+      <div class="legend-row is-absent">
+        <span class="tile absent">C</span>
+        <div>
+          <div class="label">Grey — not in the word</div>
+          <p>This letter <strong>isn't in the word at all</strong>. Rule it out and don't spend another guess on it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="marker">3</span> A worked example</h2>
+
+    <div class="example">
+      <div class="example-head">The hidden word is <b>GRASS</b></div>
+
+      <div class="guess">
+        <div class="row">
+          <span class="tile absent">C</span>
+          <span class="tile absent">H</span>
+          <span class="tile correct">A</span>
+          <span class="tile absent">I</span>
+          <span class="tile present">R</span>
+        </div>
+        <p class="note">Opening guess. <b>A</b> is in the right spot, <b>R</b> is in the word but belongs elsewhere, and C, H and I are out.</p>
+      </div>
+
+      <div class="guess">
+        <div class="row">
+          <span class="tile absent">T</span>
+          <span class="tile correct">R</span>
+          <span class="tile correct">A</span>
+          <span class="tile absent">C</span>
+          <span class="tile absent">K</span>
+        </div>
+        <p class="note">Moving <b>R</b> one place left turns it green. Two letters locked, three to find.</p>
+      </div>
+
+      <div class="guess">
+        <div class="row">
+          <span class="tile correct">G</span>
+          <span class="tile correct">R</span>
+          <span class="tile correct">A</span>
+          <span class="tile correct">S</span>
+          <span class="tile correct">S</span>
+        </div>
+        <p class="note">Solved on the third guess. <b class="points">+5 points</b>, and the next word loads.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h3>The one rule that trips people up</h3>
+      <p>
+        A letter only gets a colour for <strong>as many times as it actually appears</strong>
+        in the hidden word. Guess <strong>SASSY</strong> against <strong>GRASS</strong> —
+        which has two S's — and the three S's come back differently:
+      </p>
+      <div class="row">
+        <span class="tile present">S</span>
+        <span class="tile present">A</span>
+        <span class="tile absent">S</span>
+        <span class="tile correct">S</span>
+        <span class="tile absent">Y</span>
+      </div>
+      <p>
+        One S is green because it landed in the right place. One is yellow — there's a
+        second S elsewhere. The third is <strong>grey, even though the word contains S</strong>,
+        because both S's are already accounted for.
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="marker">4</span> The team rules</h2>
+    <ul class="rules-list">
+      <li>
+        <span class="k">Scoring</span>
+        <p class="v"><span class="points">+5</span> for each word solved within five guesses. <span>A missed word scores nothing.</span></p>
+      </li>
+      <li>
+        <span class="k">The clock</span>
+        <p class="v">Each team gets the same amount of time — 10 minutes by default. <span>It runs continuously across as many words as you can get through.</span></p>
+      </li>
+      <li>
+        <span class="k">No passing</span>
+        <p class="v">A word you can't see still has to be played out. <span>Use all five guesses or solve it.</span></p>
+      </li>
+      <li>
+        <span class="k">Time's up</span>
+        <p class="v">The turn stops the moment the clock hits zero. <span>A word in progress scores nothing, even on a promising board.</span></p>
+      </li>
+      <li>
+        <span class="k">Fair draw</span>
+        <p class="v">Each team gets its own set of randomly drawn words. <span>No overlap, so nothing is given away by watching the other team.</span></p>
+      </li>
+      <li>
+        <span class="k">Guesses</span>
+        <p class="v">Any five letters is a valid guess. <span>Probe words like CRANE or SLATE are fair game and are a good way to open.</span></p>
+      </li>
+      <li>
+        <span class="k">Winning</span>
+        <p class="v">Highest score after both turns. <span>Level scores are a tie — no tie-break.</span></p>
+      </li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="marker">5</span> Controls</h2>
+    <div class="keys">
+      <div class="key-row"><kbd>A–Z</kbd><span>Type a letter</span></div>
+      <div class="key-row"><kbd>Enter</kbd><span>Submit the guess</span></div>
+      <div class="key-row"><kbd>Backspace</kbd><span>Delete a letter</span></div>
+      <div class="key-row"><kbd>Esc</kbd><span>Pause and stop the clock</span></div>
+    </div>
+    <p style="margin-top:16px;color:var(--muted);font-size:15px;">
+      The on-screen keyboard works too, and it dims the letters you've already ruled out.
+    </p>
+  </section>
+
+  <footer>
+    <span class="vs"><span class="a">Team A</span> vs <span class="b">Team B</span></span>
+    — shout your guesses, argue about the vowels, watch the clock.
+  </footer>
+
+</main>
+</body>
+</html>

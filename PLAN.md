@@ -1,0 +1,135 @@
+# Team Wordle — Plan of Execution
+
+Monthly team fun activity. Two teams race to solve as many 5-letter Wordle
+words as they can inside a fixed clock. Runs entirely in the browser from a
+`file://` path — no server, no build step, no dependencies.
+
+Status: **built and verified.** See README.md for how to run it.
+
+---
+
+## Decisions locked in
+
+| Question | Decision |
+| --- | --- |
+| Word fairness | **Different random words per team.** Pool shuffled once, split in half, Team A draws from one half and Team B from the other. No overlap, no repeats, no spoilers. |
+| Scoring | **Flat 5 points** per word solved within 5 attempts. 0 otherwise. |
+| Clock expiry mid-word | **Hard stop.** Turn ends immediately, in-progress word scores 0, answer revealed. |
+| Extras in v1 | **Pause button** + **editable timer on the start screen**. Otherwise minimal — no sound effects. |
+
+## Core rules
+
+- Exactly two teams: Team A and Team B. Names and rosters hardcoded in `config.js`.
+- Each team gets the same amount of clock (default 10 minutes), used continuously across as many words as they can get through.
+- 5 letters, 5 attempts per word. No passing — a team plays all 5 attempts or solves it.
+- Solve within 5 attempts: +5 points. Fail: 0 points, answer revealed, next word.
+- Highest score wins. Ties are shown as a tie.
+
+---
+
+## File layout
+
+```
+index.html     structure + on-screen keyboard
+styles.css     all styling
+config.js      <- THE FILE YOU EDIT: team names, rosters, timer, points, attempts
+words.js       ~70 common 5-letter words
+game.js        all game logic
+```
+
+### `file://` constraint
+ES modules (`type="module"`) are blocked by browser CORS when a page is opened
+by double-click from the filesystem — the game would silently fail to load.
+All scripts are therefore plain `<script>` tags using globals. Load order in
+`index.html` matters: `config.js`, `words.js`, then `game.js`.
+
+### `config.js` — the editing surface
+
+```js
+const CONFIG = {
+  teamA: { name: "Team A", members: ["Name 1", "Name 2", "Name 3"] },
+  teamB: { name: "Team B", members: ["Name 1", "Name 2", "Name 3"] },
+  turnSeconds: 600,      // also editable on the start screen
+  pointsPerWord: 5,
+  maxAttempts: 5,
+};
+```
+
+Rosters render as-is at any length — add or remove names freely during the call.
+
+---
+
+## Layout
+
+```
++--------------+--------------------------------+--------------+
+| TEAM A    42 |   TEAM A'S TURN      7:23      | TEAM B    35 |
+| ------------ |          [ Pause ]             | ------------ |
+| - Name 1     |   +---+---+---+---+---+        | - Name 1     |
+| - Name 2     |   | C | R | A | N | E |  done  | - Name 2     |
+| - Name 3     |   +---+---+---+---+---+        | - Name 3     |
+|              |   | S | T |   |   |   |  now   |              |
+|   > ACTIVE   |   +---+---+---+---+---+        |   dimmed     |
+|              |   (5 rows total)               |              |
+|              |   Word 4 - Solved 3            |              |
+|              |   [ on-screen keyboard ]       |              |
++--------------+--------------------------------+--------------+
+```
+
+Active team's panel is highlighted and raised; the idle team's panel dims.
+Both rosters stay visible at all times.
+
+## Screen flow
+
+1. **Start** — both rosters, timer field pre-filled at 10 minutes, rules recap, `Start Team A`.
+2. **Team A turn** — clock runs continuously across words. Solve -> "CORRECT +5" flash -> next word auto-loads. Fail all 5 attempts -> answer revealed ~2s -> next word.
+3. **Turn over** (clock hits 0, or the team clears their whole half of the pool) — hard stop, Team A's score shown, `Start Team B` button so the host controls when B begins.
+4. **Team B turn** — same, fresh clock.
+5. **Result** — winner banner (or tie), both scores, per-team breakdown of words solved vs. missed, `Play Again` reshuffles.
+
+## Game mechanics
+
+- **Word pool:** ~70 everyday words (`BREAD`, `CHAIR`, `MONEY`, `HOUSE`, `LIGHT`...). Nothing obscure, no proper nouns.
+- **Guess validation:** any 5 letters is accepted. With only a ~70-word dictionary, requiring guesses to be dictionary entries would reject `CRANE` and make the game unplayable. Length is the only check.
+- **Tile colouring:** two-pass algorithm so duplicate letters behave correctly — greens claimed first, then yellows only against remaining unmatched letters. (The naive one-pass version wrongly shows two yellow Ls for `LLAMA` against `HELLO`.)
+- **Clock:** delta-based (`Date.now()`), not a naive decrement, so it stays accurate if the tab throttles. Frozen while paused and during the short between-word reveal (dead time, not thinking time).
+
+## Input
+
+Physical keyboard (letters, Enter, Backspace) plus a clickable on-screen keyboard
+that colour-tracks used letters — useful as an audience visual while the host
+types what the room shouts.
+
+## Verification before handoff
+
+Test from a real `file://` path and confirm:
+
+- [x] Duplicate-letter colouring on a known case (`LLAMA` vs `HELLO`)
+- [x] Timer expiry mid-word ends the turn and scores that word 0
+- [x] Pause/resume does not leak or skip time
+- [x] Word-pool exhaustion ends the turn cleanly
+- [x] Tie path renders as a tie, not a winner
+- [x] Opens correctly by double-click, offline, no console errors
+
+---
+
+## Verification record (run in Chrome, 2026-10-27)
+
+All checks above passed. Specifics:
+
+- `evaluate()` matched real Wordle on `LLAMA`/`HELLO`, `HELLO`/`LLAMA`,
+  `SPEED`/`ERASE`, `ABBEY`/`BLOBS`, `GEESE`/`THESE`, `CRANE`/`CRANE`.
+- Word pool: 82 words, all 5 letters, no duplicates -> 41 per team, 0 overlap.
+- Short guess rejected with a shake and "Needs 5 letters".
+- Solve: +5, panel score updates, board clears, next word auto-loads.
+- Miss after 5 attempts: answer revealed, 0 points, next word loads.
+- Pause: clock drift over a 1.5s pause measured 0.00s.
+- Time expiry mid-word: turn ended, word recorded as missed, score unchanged.
+- Pool exhaustion: turn ended cleanly with "Every word in the pool was played."
+- Tie path: tie headline, no winner highlight. Win path: correct team highlighted.
+- Play Again returned to the start screen and reshuffled.
+- No console errors or warnings on load or during play.
+
+One bug found and fixed during testing: pausing during the between-word answer
+reveal let the next word load behind the veil. `hold()` now defers until play
+resumes.

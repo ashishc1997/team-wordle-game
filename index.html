@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Team Wordle</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ======================= START SCREEN ======================= -->
+<section id="screen-start" class="screen">
+  <div class="start-card">
+    <h1 class="logo">TEAM<span>WORDLE</span></h1>
+
+    <div class="start-teams">
+      <div class="start-team" id="start-team-a"></div>
+      <div class="start-vs">VS</div>
+      <div class="start-team" id="start-team-b"></div>
+    </div>
+
+    <div class="start-controls">
+      <label for="minutes-input">Minutes per team</label>
+      <input id="minutes-input" type="number" min="1" max="60" step="1">
+      <button id="btn-start" class="btn btn-primary">Start <span id="start-team-label">Team A</span></button>
+    </div>
+
+    <ul class="rules">
+      <li>Each team has the clock to solve as many 5-letter words as they can.</li>
+      <li><strong id="rule-attempts">5</strong> attempts per word. No passing &mdash; play it out.</li>
+      <li>Solved within the attempts: <strong id="rule-points">+5</strong> points. Missed: 0.</li>
+      <li>Clock hits zero mid-word? Hard stop &mdash; that word scores nothing.</li>
+      <li>Both teams get different random words. Highest score wins.</li>
+    </ul>
+
+    <a class="rules-link" href="rules.html" target="_blank" rel="noopener">Full rules &amp; colour guide &rarr;</a>
+  </div>
+</section>
+
+<!-- ======================= GAME SCREEN ======================== -->
+<section id="screen-game" class="screen hidden">
+  <aside class="panel" id="panel-a"></aside>
+
+  <main class="stage">
+    <header class="stage-head">
+      <div class="turn-label" id="turn-label">TEAM A&rsquo;S TURN</div>
+      <div class="clock" id="clock">10:00</div>
+      <div class="stage-head-row">
+        <button id="btn-pause" class="btn btn-ghost">Pause</button>
+        <div class="progress" id="progress">Word 1 &middot; Solved 0</div>
+      </div>
+    </header>
+
+    <div class="board-wrap">
+      <div id="board" class="board"></div>
+      <div id="message" class="message"></div>
+    </div>
+
+    <div id="keyboard" class="keyboard"></div>
+  </main>
+
+  <aside class="panel" id="panel-b"></aside>
+
+  <div id="pause-veil" class="veil hidden">
+    <div class="veil-card">
+      <h2>Paused</h2>
+      <p>The clock is stopped.</p>
+      <button id="btn-resume" class="btn btn-primary">Resume</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TURN OVER SCREEN ===================== -->
+<section id="screen-turnover" class="screen hidden">
+  <div class="start-card">
+    <h2 class="headline" id="turnover-title">Team A&rsquo;s turn is over</h2>
+    <p class="subhead" id="turnover-reason"></p>
+    <div class="bigscore" id="turnover-score">0</div>
+    <div class="score-caption">points</div>
+    <div class="breakdown" id="turnover-breakdown"></div>
+    <button id="btn-next-turn" class="btn btn-primary">Start Team B</button>
+  </div>
+</section>
+
+<!-- ======================= RESULT SCREEN ====================== -->
+<section id="screen-result" class="screen hidden">
+  <div class="start-card">
+    <div class="trophy">&#127942;</div>
+    <h2 class="headline" id="result-title">Team A wins!</h2>
+    <div class="result-scores">
+      <div class="result-team" id="result-a"></div>
+      <div class="result-team" id="result-b"></div>
+    </div>
+    <div class="breakdown-pair">
+      <div class="breakdown" id="result-breakdown-a"></div>
+      <div class="breakdown" id="result-breakdown-b"></div>
+    </div>
+    <button id="btn-replay" class="btn btn-primary">Play Again</button>
+  </div>
+</section>
+
+<script src="config.js"></script>
+<script src="words.js"></script>
+<script src="game.js"></script>
+</body>
+</html>

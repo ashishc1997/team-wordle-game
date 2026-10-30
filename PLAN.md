@@ -13,7 +13,7 @@ Status: **built and verified.** See README.md for how to run it.
 | Question | Decision |
 | --- | --- |
 | Word fairness | **Different random words per team.** Pool shuffled once, split in half, Team A draws from one half and Team B from the other. No overlap, no repeats, no spoilers. |
-| Scoring | **Flat 5 points** per word solved within 5 attempts. 0 otherwise. |
+| Scoring | **Flat 5 points** per word solved within 6 attempts. 0 otherwise. |
 | Clock expiry mid-word | **Hard stop.** Turn ends immediately, in-progress word scores 0, answer revealed. |
 | Extras in v1 | **Pause button** + **editable timer on the start screen**. Otherwise minimal — no sound effects. |
 
@@ -21,8 +21,8 @@ Status: **built and verified.** See README.md for how to run it.
 
 - Exactly two teams: Team A and Team B. Names and rosters hardcoded in `config.js`.
 - Each team gets the same amount of clock (default 10 minutes), used continuously across as many words as they can get through.
-- 5 letters, 5 attempts per word. No passing — a team plays all 5 attempts or solves it.
-- Solve within 5 attempts: +5 points. Fail: 0 points, answer revealed, next word.
+- 5 letters, 6 attempts per word. No passing — a team plays all 6 attempts or solves it.
+- Solve within 6 attempts: +5 points. Fail: 0 points, answer revealed, next word.
 - Highest score wins. Ties are shown as a tie.
 
 ---
@@ -51,7 +51,7 @@ const CONFIG = {
   teamB: { name: "Team B", members: ["Name 1", "Name 2", "Name 3"] },
   turnSeconds: 600,      // also editable on the start screen
   pointsPerWord: 5,
-  maxAttempts: 5,
+  maxAttempts: 6,
 };
 ```
 
@@ -70,7 +70,7 @@ Rosters render as-is at any length — add or remove names freely during the cal
 | - Name 3     |   +---+---+---+---+---+        | - Name 3     |
 |              |   | S | T |   |   |   |  now   |              |
 |   > ACTIVE   |   +---+---+---+---+---+        |   dimmed     |
-|              |   (5 rows total)               |              |
+|              |   (6 rows total)               |              |
 |              |   Word 4 - Solved 3            |              |
 |              |   [ on-screen keyboard ]       |              |
 +--------------+--------------------------------+--------------+
@@ -82,7 +82,7 @@ Both rosters stay visible at all times.
 ## Screen flow
 
 1. **Start** — both rosters, timer field pre-filled at 10 minutes, rules recap, `Start Team A`.
-2. **Team A turn** — clock runs continuously across words. Solve -> "CORRECT +5" flash -> next word auto-loads. Fail all 5 attempts -> answer revealed ~2s -> next word.
+2. **Team A turn** — clock runs continuously across words. Solve -> "CORRECT +5" flash -> next word auto-loads. Fail all 6 attempts -> answer revealed ~2s -> next word.
 3. **Turn over** (clock hits 0, or the team clears their whole half of the pool) — hard stop, Team A's score shown, `Start Team B` button so the host controls when B begins.
 4. **Team B turn** — same, fresh clock.
 5. **Result** — winner banner (or tie), both scores, per-team breakdown of words solved vs. missed, `Play Again` reshuffles.
@@ -122,7 +122,7 @@ All checks above passed. Specifics:
 - Word pool: 82 words, all 5 letters, no duplicates -> 41 per team, 0 overlap.
 - Short guess rejected with a shake and "Needs 5 letters".
 - Solve: +5, panel score updates, board clears, next word auto-loads.
-- Miss after 5 attempts: answer revealed, 0 points, next word loads.
+- Miss after 6 attempts: answer revealed, 0 points, next word loads.
 - Pause: clock drift over a 1.5s pause measured 0.00s.
 - Time expiry mid-word: turn ended, word recorded as missed, score unchanged.
 - Pool exhaustion: turn ended cleanly with "Every word in the pool was played."

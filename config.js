@@ -31,5 +31,5 @@ const CONFIG = {
   turnSeconds: 600,   // time per team, in seconds (600 = 10 minutes).
                       // Also editable on the start screen before kick-off.
   pointsPerWord: 5,   // points for solving a word within maxAttempts
-  maxAttempts: 5,     // guesses allowed per word
+  maxAttempts: 6,     // guesses allowed per word
 };

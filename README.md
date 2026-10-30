@@ -22,7 +22,7 @@ const CONFIG = {
   teamB: { name: "Team B", members: ["Dev", "Esha", "Farid"] },
   turnSeconds: 600,   // 10 minutes per team (also editable on the start screen)
   pointsPerWord: 5,
-  maxAttempts: 5,
+  maxAttempts: 6,
 };
 ```
 
@@ -35,14 +35,14 @@ To change the words, edit `words.js`. Keep them 5 letters, uppercase, A–Z.
 
 1. **Start screen** — check the rosters, set the minutes, hit `Start Team A`.
 2. **Team A plays.** The clock runs continuously. Solve a word and the next one
-   loads automatically. Miss all 5 attempts and the answer is revealed before
+   loads automatically. Miss all 6 attempts and the answer is revealed before
    moving on — no passing.
 3. **Clock hits zero** — hard stop. A word in progress scores nothing. Team A's
    score is shown, then `Start Team B` when the room is ready.
 4. **Team B plays** the same way with a fresh clock and completely different words.
 5. **Result** — winner (or tie), both scores, and every word each team solved or missed.
 
-Scoring: **+5** for each word solved within 5 attempts, **0** for a miss.
+Scoring: **+5** for each word solved within 6 attempts, **0** for a miss.
 
 ## Controls
 
